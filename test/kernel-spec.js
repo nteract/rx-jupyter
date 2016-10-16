@@ -1,61 +1,84 @@
-import * as kernel from '../lib/kernel';
 import { expect } from 'chai';
 
-const endpoint = 'http://localhost:8888/api';
-const crossDomain = true;
+import * as kernels from '../src/kernels';
 
-describe('createAllKernelSpec', () => {
-  it('creates a payload for a kernelspec request', () => {
-    const request = kernel.createAllKernelSpec(endpoint, crossDomain);
+const serverConfig = {
+  endpoint: 'http://localhost:8888',
+  crossDomain: true,
+};
 
-    expect(request).to.deep.equal({
-      url: 'http://localhost:8888/api/kernelspecs',
-      crossDomain: true,
-      responseType: 'json',
+describe('kernels', () => {
+  describe('createSettingsForList', () => {
+    it('create AJAX settings for listing kernels', () => {
+      const request = kernels.createSettingsForList(serverConfig);
+
+      expect(request).to.deep.equal({
+        url: 'http://localhost:8888/api/kernels',
+        crossDomain: true,
+        responseType: 'json',
+      });
     });
   });
-});
 
-describe('createAllKernel', () => {
-  it('creates a payload for a kernels request', () => {
-    const request = kernel.createAllKernel(endpoint, crossDomain);
+  describe('createSettingsForGet', () => {
+    it('create AJAX settings for getting a kernel by ID', () => {
+      const request = kernels.createSettingsForGet(serverConfig, 'test-id');
 
-    expect(request).to.deep.equal({
-      url: 'http://localhost:8888/api/kernels',
-      crossDomain: true,
-      responseType: 'json',
+      expect(request).to.deep.equal({
+        url: 'http://localhost:8888/api/kernels/test-id',
+        crossDomain: true,
+        responseType: 'json',
+      });
     });
   });
-});
 
-describe('createKernel', () => {
-  it('creates a payload for a single kernel request', () => {
-    const request = kernel.createKernel(endpoint, crossDomain, 'test-id');
+  describe('createSettingsForStart', () => {
+    it('create AJAX settings for creating a kernel', () => {
+      const request = kernels.createSettingsForStart(serverConfig, 'python3', '~');
 
-    expect(request).to.deep.equal({
-      url: 'http://localhost:8888/api/kernels/test-id',
-      crossDomain: true,
-      responseType: 'json',
+      expect(request).to.deep.equal({
+        url: 'http://localhost:8888/api/kernels',
+        crossDomain: true,
+        responseType: 'json',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: {
+          path: '~',
+          kernel_name: 'python3',
+        },
+      });
     });
   });
-});
 
-describe('createLaunchKernel', () => {
-  it('creates a payload for a launch kernel request', () => {
-    const request = kernel.createLaunchKernel(endpoint, crossDomain, 'python3', '~');
+  describe('get', () => {
+    it('creates an AjaxObservable configured for getting a kernel by id', () => {
+      const id = '0000-1111-2222-3333';
+      const kernel$ = kernels.get(serverConfig, id);
+      const request = kernel$.request;
+      expect(request.url).to.equal(`http://localhost:8888/api/kernels/${id}`);
+      expect(request.method).to.equal('GET');
+    });
+  });
 
-    expect(request).to.deep.equal({
-      url: 'http://localhost:8888/api/kernels',
-      crossDomain: true,
-      responseType: 'json',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-      body: {
-        path: '~',
-        kernel_name: 'python3',
-      }
+  describe('list', () => {
+    it('creates an AjaxObservable configured for listing kernels', () => {
+      const kernel$ = kernels.list(serverConfig);
+      const request = kernel$.request;
+      expect(request.url).to.equal('http://localhost:8888/api/kernels');
+      expect(request.method).to.equal('GET');
+    });
+  });
+
+  describe('start', () => {
+    it('creates an AjaxObservable configured for starting a kernel', () => {
+      const kernel$ = kernels.start(serverConfig, 'python3000', '/tmp');
+      const request = kernel$.request;
+      expect(request.url).to.equal('http://localhost:8888/api/kernels');
+      expect(request.method).to.equal('POST');
+      expect(request.body.path).to.equal('/tmp');
+      expect(request.body.kernel_name).to.equal('python3000');
     });
   });
 });
