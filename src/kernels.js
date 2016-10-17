@@ -1,6 +1,8 @@
 import { ajax } from 'rxjs/observable/dom/ajax';
 import 'rxjs/add/operator/map';
 
+import { webSocket } from 'rxjs/observable/dom/webSocket';
+
 /**
  * Creates the AJAX settings for a call to the kernels API.
  *
@@ -183,4 +185,13 @@ export function interrupt(serverConfig, id) {
  */
 export function restart(serverConfig, id) {
   return ajax(createSettingsForRestart(serverConfig, id));
+}
+
+export function formWebSocketURL(serverConfig, id) {
+  const url = `${serverConfig.endpoint}/api/kernels/${id}/channels`;
+  return url.replace(/^http(s)?/, 'ws$1');
+}
+
+export function connect(serverConfig, id) {
+  return webSocket(formWebSocketURL(serverConfig, id));
 }

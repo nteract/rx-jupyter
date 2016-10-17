@@ -2,6 +2,9 @@ import { expect } from 'chai';
 
 import * as kernels from '../src/kernels';
 
+// For the test using a websocket
+global.WebSocket = require('ws');
+
 const serverConfig = {
   endpoint: 'http://localhost:8888',
   crossDomain: true,
@@ -151,6 +154,32 @@ describe('kernels', () => {
       const request = kernel$.request;
       expect(request.url).to.equal(`http://localhost:8888/api/kernels/${id}/restart`);
       expect(request.method).to.equal('POST');
+    });
+  });
+
+  describe('formWebSocketURL', () => {
+    it('creates websocket URLs that match the originating scheme', () => {
+      const config = {
+        endpoint: 'https://tmp58.tmpnb.org/user/TOTefPUbkgOu',
+      };
+      const wsURL = kernels.formWebSocketURL(config, '0000-1111');
+      expect(wsURL).to.equal(
+        'wss://tmp58.tmpnb.org/user/TOTefPUbkgOu/api/kernels/0000-1111/channels'
+      );
+
+      config.endpoint = 'http://127.0.0.1:8888';
+
+      const wsURL2 = kernels.formWebSocketURL(config, '4444-2222');
+      expect(wsURL2).to.equal(
+        'ws://127.0.0.1:8888/api/kernels/4444-2222/channels'
+      );
+    });
+  });
+
+  describe('connect', () => {
+    it('returns a WebSocketSubject attached to the kernel', () => {
+      const subject = kernels.connect(serverConfig, '777');
+      expect(subject.url).to.equal('ws://localhost:8888/api/kernels/777/channels');
     });
   });
 });
