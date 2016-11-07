@@ -12,6 +12,11 @@ function formURI(path) {
   return pathJoin('/api/contents/', path);
 }
 
+function formCheckpointURI(path, checkpointID) {
+  return pathJoin('/api/contents/', path, 'checkpoints', checkpointID);
+}
+
+
 /**
  * TODO: Explicit typing of the payloads for content
  *
@@ -30,14 +35,30 @@ function formURI(path) {
  */
 
 /**
+  * Creates an AjaxObservable for removing content
+  *
+  * @param {Object} serverConfig  - The server configuration
+  * @param {string} path  - The path to the content
+  *
+  * @return {AjaxObservable}  An Observable with the request response
+  */
+export function remove(serverConfig, path) {
+  const uri = formURI(path);
+  const opts = {
+    method: 'DELETE',
+  };
+  return ajax(createAJAXSettings(serverConfig, uri, opts));
+}
+
+/**
  * Creates an AjaxObservable for getting content at a path
  *
- * @param {Object}  serverConfig  - The server configuration
- * @param {string}  path  - The content to fetch
- * @param {Object}  params - type, format, content
- * @param {string}  params.type - file type, one of 'file', 'directory', 'notebook'
- * @param {string}  params.format - how file content should be returned, e.g. 'text', 'base64'
- * @param {number}  params.content - return content or not (0 => no content, 1 => content please)
+ * @param {Object} serverConfig  - The server configuration
+ * @param {string} path  - The content to fetch
+ * @param {Object} params - type, format, content
+ * @param {string} params.type - file type, one of 'file', 'directory', 'notebook'
+ * @param {string} params.format - how file content should be returned, e.g. 'text', 'base64'
+ * @param {number} params.content - return content or not (0 => no content, 1 => content please)
  *
  * @return  {AjaxObservable}  An Observable with the request response
  */
@@ -51,13 +72,33 @@ export function get(serverConfig, path, params) {
 }
 
 /**
+ * Creates an AjaxObservable for renaming a file.
+ *
+ * @param {Object}  serverConfig  - The server configuration
+ * @param  {string} path - The content to rename.
+ * @param  {Object} model -  ^^TODO
+ * @return  {AjaxObservable}  An Observable with the request response
+ */
+export function update(serverConfig, path, model) {
+  const uri = formURI(path);
+  const opts = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'PATCH',
+    body: model,
+  };
+  return ajax(createAJAXSettings(serverConfig, uri, opts));
+}
+
+/**
  * Creates an AjaxObservable for creating content
  *
  * @param {Object}  serverConfig  - The server configuration
  * @param {string}  path  - The path to the content
  * @param {Object}  model - ^^^^ TODO Above
  *
- * @return  {AjaxObserbable}  An Observable with the request response
+ * @return  {AjaxObservable}  An Observable with the request response
  */
 export function create(serverConfig, path, model) {
   const uri = formURI(path);
@@ -72,17 +113,82 @@ export function create(serverConfig, path, model) {
 }
 
 /**
- * Creates an AjaxObservable for removing content
- *
- * @param {Object}  serverConfig  - The server configuration
- * @param {string}  path  - The path to the content
- *
- * @return  {AjaxObservable}  An Observable with the request response
+ * Creates an AjaxObservable for saving the file in the location specified by
+ * name and path in the model.
+ * @param {Object} serverConfig  - The server configuration
+ * @param {string} path - The content to
+ * @param  {Object} model - ^^^^ TODO above
+ * @return {AjaxObservable}  An Observable with the request response
  */
-export function remove(serverConfig, path) {
+export function save(serverConfig, path, model) {
   const uri = formURI(path);
   const opts = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'PUT',
+    body: model,
+  };
+  return ajax(createAJAXSettings(serverConfig, uri, opts));
+}
+
+/**
+ * Creates an AjaxObservable for listing checkpoints for a given file.
+ * @param {Object} serverConfig  - The server configuration
+ * @param  {string} path - The content containing checkpoints to be listed.
+ * @return {AjaxObservable}  An Observable with the request response
+ */
+export function listCheckpoints(serverConfig, path) {
+  const uri = formCheckpointURI(path, '');
+  const opts = {
+    method: 'GET',
+  };
+  return ajax(createAJAXSettings(serverConfig, uri, opts));
+}
+
+/**
+ * Creates an AjaxObservable for creating a new checkpoint with the current state of a file.
+ * With the default Jupyter FileContentsManager, only one checkpoint is supported,
+ * so creating new checkpoints clobbers existing ones.
+ *
+ * @param {Object} serverConfig  - The server configuration
+ * @param {string} path - The content containing the checkpoint to be created.
+ * @return {AjaxObservable}  An Observable with the request response
+ */
+export function createCheckpoint(serverConfig, path) {
+  const uri = formCheckpointURI(path, '');
+  const opts = {
+    method: 'POST',
+  };
+  return ajax(createAJAXSettings(serverConfig, uri, opts));
+}
+
+/**
+ * Creates an AjaxObservable for deleting a checkpoint for a given file.
+ * @param  {Object} serverConfig  - The server configuration
+ * @param  {string} path - The content containing the checkpoint to be deleted.
+ * @param  {string} checkpoint_id - ID of checkpoint to be deleted.
+ * @return {AjaxObservable}  An Observable with the request response
+ */
+export function deleteCheckpoint(serverConfig, path, checkpointID) {
+  const uri = formCheckpointURI(path, checkpointID);
+  const opts = {
     method: 'DELETE',
+  };
+  return ajax(createAJAXSettings(serverConfig, uri, opts));
+}
+
+/**
+ * Creates an AjaxObservable for restoring a file to a specified checkpoint.
+ * @param  {Object} serverConfig  - The server configuration
+ * @param  {string} path - The content to restore to a previous checkpoint.
+ * @param  {string} checkpoint_id - ID of checkpoint to be used for restoration.
+ * @return {AjaxObservable}  An Observable with the request response
+ */
+export function restoreFromCheckpoint(serverConfig, path, checkpointID) {
+  const uri = formCheckpointURI(path, checkpointID);
+  const opts = {
+    method: 'POST',
   };
   return ajax(createAJAXSettings(serverConfig, uri, opts));
 }
