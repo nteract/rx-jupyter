@@ -1,5 +1,7 @@
 # rx-jupyter
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/nteract/rx-jupyter.svg)](https://greenkeeper.io/)
+
 [![Build Status](https://travis-ci.org/nteract/rx-jupyter.svg?branch=master)](https://travis-ci.org/nteract/rx-jupyter)
 [![codecov](https://codecov.io/gh/nteract/rx-jupyter/branch/master/graph/badge.svg)](https://codecov.io/gh/nteract/rx-jupyter)
 
